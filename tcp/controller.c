@@ -15,7 +15,6 @@ char* invalidRequest() {
 	return invalid_req;
 }
 
-
 // Gets the request param
 char* getRequestParam(char request[]) {
 
