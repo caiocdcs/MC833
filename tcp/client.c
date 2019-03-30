@@ -19,7 +19,7 @@ int socket_fd;
 
 void simulateRequests() {
     // Number of requests of each operation
-    int num_requests = 30;
+    int num_requests = 1;
 
     // Getting timeval structs to get time delay on requests made
     struct timeval start, stop;
@@ -27,12 +27,12 @@ void simulateRequests() {
     // Keeping time array of each request
     long long int request_times[6][num_requests];
 
-    char *course = "course MC833\n";
-    char *skill = "skill Campinas\n";
-    char *add_experience = "add_experience joao@unicamp.br 'Banco de dados'\n";
-    char *get_experience = "get_experience joao@unicamp.br\n";
+    char *course = "course Music\n";
+    char *skill = "skill Sacramento\n";
+    char *add_experience = "add_experience jane.doe@gmail.com 'Banco de dados'\n";
+    char *get_experience = "get_experience jane.doe@gmail.com\n";
     char *all_profiles = "all_profiles\n";
-    char *profile = "profile joao@unicamp.br\n";
+    char *profile = "profile jane.doe@gmail.com\n";
 
     char *requests[] = {course, skill, add_experience, get_experience, all_profiles, profile};
 
@@ -68,6 +68,8 @@ void simulateRequests() {
             gettimeofday(&stop, NULL);
 
             request_times[i][j] = (stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec);
+
+            printf("%s\n-----", answer);
         }
         
     }
@@ -75,12 +77,12 @@ void simulateRequests() {
     sleep(1);
 
     // printing times
-    for (i = 0; i < 7; i++) {
-        for (j = 0; j < num_requests; j++) {
-            printf("%llu\t", request_times[i][j]);
-        }
-        printf("\n");
-    }
+//    for (i = 0; i < 4; i++) {
+//        for (j = 0; j < num_requests; j++) {
+//            printf("%llu\t", request_times[i][j]);
+//        }
+//        printf("\n");
+//    }
 }
 
 int main(int argc, char *argv[]) {

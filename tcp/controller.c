@@ -4,69 +4,66 @@
 
 #include "controller.h"
 #include "services.h"
+#include "database.h"
 
 #define MAX_CLIENTS 30
 
-char* invalidRequest() {
-	char req_answer[] = "Invalid request type.\n\n";
-	char *invalid_req = malloc(strlen(req_answer) * sizeof(char));
-	strcpy(invalid_req, req_answer);
+typedef struct Request {
+    char* prefix;
+    char* query;
+    char* data;
+} Request;
 
-	return invalid_req;
+char* requestMessage(char message[]) {
+	char *req = malloc(strlen(message) * sizeof(char));
+	strcpy(req, message);
+
+	return req;
 }
 
 // Gets the request param
-char* getRequestParam(char request[]) {
+Request getRequestParams(char request[]) {
+    Request result;
+    char* req = malloc(strlen(request) * sizeof(char));
+	strcpy(req, request);
+	result.prefix = strsep(&req , " ");
+	result.query = strsep(&req, " ");
+	result.data = strsep(&req, "\n");
 
-	char *space_pointer;
-	char *request_type;
+    if (result.prefix != NULL && result.prefix[strlen(result.prefix) -1] == '\n') {
+        result.prefix[strlen(result.prefix) -1] = '\0';
+    }
 
-	space_pointer = strstr(request, " ");
-
-	if (space_pointer == NULL) {
-		return NULL;
+	if (result.query != NULL &&  result.query[strlen(result.query) -1] == '\n') {
+        result.query[strlen(result.query) -1] = '\0';
 	}
 
-	space_pointer++;
-	request_type = malloc(strlen(space_pointer) * sizeof(char));
-	strcpy(request_type, space_pointer);
-
-	char *pos;
-	pos = strstr(request_type, '\n');
-
-	if (pos != NULL)
-	    *pos = '\0';
-
-	return request_type;
+	return result;
 }
 
 
-// Parses given request of type "request_prefix request_param", in which request_prefix
+// Parses given request of query "request_prefix request_param", in which request_prefix
 // maybe an option from the menu
 char* getRequest(char request[]) {
-
-	char *request_param;
+	Request request_params;
 	char *request_answer;
 
-	request_param = getRequestParam(request);
-
-    if (strncmp(request, "course", 6) == 0) {
-        request_answer = course(request_param);
-    } else if (strncmp(request, "skill", 5)) {
-        request_answer = skill(request_param);
-    } else if (strncmp(request, "add_experience", 14)) {
-        request_answer = add_experience(request_param);
-    } else if (strncmp(request, "get_experience", 14)) {
-        request_answer = get_experience(request_param);
-    } else if (strncmp(request, "all_profiles", 12)) {
-        request_answer = all_profiles();
-    } else if (strncmp(request, "profile", 7)) {
-        request_answer = profile(request_param)
+    request_params = getRequestParams(request);
+    if (strcmp(request_params.prefix, "course") == 0) {
+        request_answer = getNamesByCourse(request_params.query);
+    } else if (strcmp(request_params.prefix, "skill") == 0) {
+        request_answer = getSkillsByCity(request_params.query);
+    } else if (strcmp(request_params.prefix, "add_experience") == 0) {
+        request_answer = requestMessage(addExpOnProfile(request_params.query, request_params.data));
+    } else if (strcmp(request_params.prefix, "get_experience")  == 0) {
+        request_answer = getExpByEmail(request_params.query);
+    } else if (strcmp(request_params.prefix, "all_profiles") == 0) {
+        request_answer = getAllInfo();
+    } else if (strcmp(request_params.prefix, "profile") == 0) {
+        request_answer = getProfileByEmail(request_params.query);
     } else {
-        request_answer = invalidRequest();
+        request_answer = requestMessage("Invalid request query.\n\n");
     }
-
-	free(request_param);
 
 	/* WARNING: It is important that request_answer is freed (in the function caller)
 	 * after it is not used anymore */

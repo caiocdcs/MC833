@@ -11,14 +11,14 @@
 
 extern profile profiles[TAM];
 
-profile* getProfileByEmail(char profileEmail[]) {
+char* getProfileByEmail(char profileEmail[]) {
 
 	int i;
 	int profile_qty = sizeof(profiles)/sizeof(profile);
 
 	for (i = 0; i < profile_qty; i++) {
 		if (strcmp(profiles[i].email, profileEmail) == 0) {
-			return &profiles[i];
+			return getInfosByEmail(profiles[i].email);
 		}
 	}
 
@@ -67,22 +67,19 @@ char* getSkillsByCity(char* city) {
 }
 
 char* addExpOnProfile(char* email, char newExp[expTAM]) {
-
 	profile *profileReturned = getProfileByEmail(email);
 	int expLenght;
 
 	if (profileReturned == NULL) {
-		 return "ERROR";
+		 return "ERROR\n";
 	}
 
 	for(expLenght = 0; profileReturned->exp[expLenght] != NULL; expLenght++) {}
 
-	printf("%d\n", expLenght);
-
 	profileReturned->exp[expLenght] = malloc(expTAM * sizeof(char));
 	profileReturned->exp[expLenght] = newExp;
 
-	return "SUCCESS";
+	return "SUCCESS\n";
 
 }
 

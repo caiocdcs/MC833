@@ -90,9 +90,9 @@ void addValidSocketsToReadSet() {
     // Adding master socket to set 
     FD_SET(master_socket, &readfds);
     max_socket_fd = master_socket;
-
     // Adding child sockets to set 
     for (int i = 0; i < MAX_CLIENTS; i++) {
+        
         // Socket descriptor
         int socket_fd = client_socket[i];
 
@@ -120,7 +120,6 @@ void waitForActivity() {
 // Reads incoming connectiong on the master socket
 void readIncomingConnections() {
 	int new_socket = accept(master_socket, (struct sockaddr *)&address, (socklen_t*)&addrlen);
-
     if (new_socket < 0) {
         perror("accept");
         exit(EXIT_FAILURE);
@@ -131,7 +130,7 @@ void readIncomingConnections() {
             new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
     // Sending new connection greeting message
-    char *message = "You are connected to the people server. ";
+    char *message = "You are connected to the people server.\n";
 
     if (write(new_socket, message, strlen(message)) != strlen(message)) {
         perror("send");
@@ -144,7 +143,7 @@ void readIncomingConnections() {
         // Assigning new socket to some empty position
         if (client_socket[i] == 0) {
             client_socket[i] = new_socket;
-            printf("Adding to list of sockets at index %d\n", i);
+            printf("Adding %d to list of sockets at index %d\n", new_socket, i);
 
             break;
         }
@@ -152,13 +151,11 @@ void readIncomingConnections() {
 }
 
 // Reads IO operations on generic sockets
-void readSocketIO(int socket_fd) {
+void readSocketIO(int socket_fd, int pos) {
     char buffer[BUFFER_SIZE];
     int valread = read(socket_fd, buffer, BUFFER_SIZE-1);
-
     // Checking if message was for closing (EOF) and also read the incoming message 
     if (valread == 0) {
-
         // Somebody disconnected, get his details and print 
         getpeername(socket_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
         printf("Host disconnected, IP %s, Port %d\n",
@@ -166,7 +163,7 @@ void readSocketIO(int socket_fd) {
 
         // Closing the socket and marking as 0 in list for reuse 
         close(socket_fd);
-        socket_fd = 0;
+        client_socket[pos] = 0;
     }
 
     // Getting and echoing back the message that came in
@@ -175,7 +172,7 @@ void readSocketIO(int socket_fd) {
         buffer[valread] = '\0';
         char* answer;
 
-        answer = getRequest(buffer, socket);
+        answer = getRequest(buffer);
 
     	// Echoing answer back to client
     	write(socket_fd, answer, strlen(answer));
@@ -185,9 +182,6 @@ void readSocketIO(int socket_fd) {
 
 // Let the magic begin...
 int main(int argc, char *argv[]) {
-
-    // Getting timeval structs to get time delay on requests made
-    struct timeval start, stop;
 
 	// Initializing all sockets with blank
 	initializeSockets();
@@ -211,10 +205,9 @@ int main(int argc, char *argv[]) {
 
     // For every socket, if it is on the reading set then read its IO operation
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        int socket_fd = &client_socket[i];
-
+        int socket_fd = client_socket[i];
         if (FD_ISSET(socket_fd, &readfds)) {
-            readSocketIO(socket);
+            readSocketIO(socket_fd, i);
         }
     }
 
@@ -228,9 +221,6 @@ int main(int argc, char *argv[]) {
         // Waiting for an activity on one of the sockets
         waitForActivity();
 
-        // Calculating time of processment after receiving an activity
-        gettimeofday(&start, NULL);
-
         // If master socket is on reading set, then it is an incoming connection 
         if (FD_ISSET(master_socket, &readfds)) {
             readIncomingConnections();
@@ -238,10 +228,10 @@ int main(int argc, char *argv[]) {
 
         // For every socket, if it is on the reading set then read its IO operation
         for (int i = 0; i < MAX_CLIENTS; i++) {
-            int socket_fd = &client_socket[i];
+            int socket_fd = client_socket[i];
 
             if (FD_ISSET(socket_fd, &readfds)) {
-                readSocketIO(socket);
+                readSocketIO(socket_fd, i);
             }
         }
     }

@@ -3,7 +3,7 @@
 #ifndef SERVICES_H
 #define SERVICES_H
 
-extern profile* getProfileByEmail(char profileEmail[]);
+extern char* getProfileByEmail(char profileEmail[]);
 
 extern char* getNamesByCourse(char* course);
 
@@ -16,7 +16,5 @@ extern char* getExpByEmail(char* email);
 extern char* getAllInfo();
 
 extern char* getInfosByEmail(char *email);
-
-extern void x();
 
 #endif
