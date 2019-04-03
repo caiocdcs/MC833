@@ -1,6 +1,5 @@
-    
-// Description: A simple TCP server side code, which echos back the received message.
-// Handle multiple socket connections with select and fd_set on Linux.
+// Description: A simple TCP server serving a database
+// Usage: ./server
 
 #include <stdio.h>
 #include <string.h>
@@ -34,6 +33,13 @@ fd_set readfds;
 int addrlen;
 // Keeps highest file descriptor number (need it for the select function)
 int max_socket_fd;
+
+// data for getting times
+int l = 0;
+struct timeval start, stop;
+// Keeping time array of each request
+long long int request_times[120];
+
 
 // Initializes all sockets with blank values
 void initializeSockets() {
@@ -130,7 +136,7 @@ void readIncomingConnections() {
             new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
     // Sending new connection greeting message
-    char *message = "You are connected to the people server.\n";
+    char *message = getCommands();
 
     if (write(new_socket, message, strlen(message)) != strlen(message)) {
         perror("send");
@@ -154,11 +160,13 @@ void readIncomingConnections() {
 void readSocketIO(int socket_fd, int pos) {
     char buffer[BUFFER_SIZE];
     int valread = read(socket_fd, buffer, BUFFER_SIZE-1);
+    // Getting initial time
+    gettimeofday(&start, NULL);
     // Checking if message was for closing (EOF) and also read the incoming message 
     if (valread == 0) {
         // Somebody disconnected, get his details and print 
         getpeername(socket_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
-        printf("Host disconnected, IP %s, Port %d\n",
+        printf("\nHost disconnected, IP %s, Port %d\n",
                inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
         // Closing the socket and marking as 0 in list for reuse 
@@ -174,7 +182,17 @@ void readSocketIO(int socket_fd, int pos) {
 
         answer = getRequest(buffer);
 
-    	// Echoing answer back to client
+        // Getting final time
+        gettimeofday(&stop, NULL);
+
+        request_times[l] = (stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec);
+
+        if (l % 20 == 0) {
+            printf("\n");
+        }
+        printf("%llu\t", request_times[l++]);
+
+    	// Sending answer back to client
     	write(socket_fd, answer, strlen(answer));
         free(answer);
     }
@@ -190,7 +208,6 @@ int main(int argc, char *argv[]) {
 	setMasterSocket();
 
     printf("Waiting for connections...\n");
-
 
     // Adding every valid (not blank) socket to the reading set
     addValidSocketsToReadSet();

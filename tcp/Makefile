@@ -1,4 +1,11 @@
-SRC=$(wildcard *.c)
+server: 
+	gcc -o server -w database.c services.c controller.c server.c
 
-server: $(SRC)
-	gcc -o $@ $^
+client: 
+	gcc -o client -w client.c
+
+client-menu: 
+	gcc -o client -w client.c
+
+clean: 
+	rm client server

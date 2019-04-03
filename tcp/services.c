@@ -11,14 +11,15 @@
 
 extern profile profiles[TAM];
 
-char* getProfileByEmail(char profileEmail[]) {
+profile* getProfileByEmail(char profileEmail[]) {
 
 	int i;
 	int profile_qty = sizeof(profiles)/sizeof(profile);
+	profile *profileToReturn;
 
 	for (i = 0; i < profile_qty; i++) {
 		if (strcmp(profiles[i].email, profileEmail) == 0) {
-			return getInfosByEmail(profiles[i].email);
+			return &profiles[i];
 		}
 	}
 
@@ -67,6 +68,7 @@ char* getSkillsByCity(char* city) {
 }
 
 char* addExpOnProfile(char* email, char newExp[expTAM]) {
+	
 	profile *profileReturned = getProfileByEmail(email);
 	int expLenght;
 
@@ -77,7 +79,7 @@ char* addExpOnProfile(char* email, char newExp[expTAM]) {
 	for(expLenght = 0; profileReturned->exp[expLenght] != NULL; expLenght++) {}
 
 	profileReturned->exp[expLenght] = malloc(expTAM * sizeof(char));
-	profileReturned->exp[expLenght] = newExp;
+    strcpy(profileReturned->exp[expLenght], newExp);
 
 	return "SUCCESS\n";
 
@@ -130,7 +132,7 @@ char* getAllInfo() {
 		for(y = 0; profiles[i].exp[y] != NULL; y++) {
 			info = realloc(info, (strlen(info) + strlen(profiles[i].exp[y]) + 2) * sizeof(char));
 			strcat(info, profiles[i].exp[y]);
-			strcat(info, ", ");
+			strcat(info, "\n");
 		}
 
 	}

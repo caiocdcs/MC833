@@ -17,38 +17,14 @@ char answer[BUFFER_SIZE];
 int socket_fd;
 
 
-void simulateRequests() {
-    // Number of requests of each operation
-    int num_requests = 20;
-
-    // Getting timeval structs to get time delay on requests made
-    struct timeval start, stop;
-
-    // Keeping time array of each request
-    long long int request_times[6][num_requests];
-
-    char *course = "1-Music\n";
-    char *skill = "2-Sacramento\n";
-    char *add_experience = "3-jane.doe@gmail.com 'Banco de dados'\n";
-    char *get_experience = "4-jane.doe@gmail.com\n";
-    char *all_profiles = "5\n";
-    char *profile = "6-jane.doe@gmail.com\n";
-
-    char *requests[] = {course, skill, add_experience, get_experience, all_profiles, profile};
-
-    int i, j = 0;
-
+void makeClienRequest() {
     // simulating all requests
-    for (i = 0; i < 6; i++) {
-        char current_request[1030];
-        strcpy(current_request, requests[i]);
+    char line[1030];
+    fgets(line, sizeof(line), stdin);
 
-        for (j = 0; j < num_requests; j++) {
-            // Getting initial time
-            gettimeofday(&start, NULL);
-
+    while (strcmp(line, "exit") != 0) {
             // Send message to the server
-            int n = write(socket_fd, current_request, strlen(current_request));
+            int n = write(socket_fd, line, strlen(line));
 
             if (n < 0) {
                 perror("ERROR writing to socket");
@@ -64,23 +40,13 @@ void simulateRequests() {
                 exit(1);
             }
 
-            // Getting final time
-            gettimeofday(&stop, NULL);
+            printf("%s\n\n", answer);
+            fflush(stdin);
 
-            request_times[i][j] = (stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec);
-        }
-        
+            fgets(line, sizeof(line), stdin);
     }
 
     sleep(1);
-
-    // printing times
-    for (i = 0; i < 6; i++) {
-       for (j = 0; j < num_requests; j++) {
-           printf("%llu\t", request_times[i][j]);
-       }
-       printf("\n");
-   }
 }
 
 int main(int argc, char *argv[]) {
@@ -133,7 +99,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Now ask for a message from the user, this message will be read by server
-    simulateRequests();
+    makeClienRequest();
 
     sleep(5);
 

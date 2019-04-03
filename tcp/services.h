@@ -3,8 +3,6 @@
 #ifndef SERVICES_H
 #define SERVICES_H
 
-extern char* getProfileByEmail(char profileEmail[]);
-
 extern char* getNamesByCourse(char* course);
 
 extern char* getSkillsByCity(char* city);

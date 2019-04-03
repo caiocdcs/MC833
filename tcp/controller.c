@@ -9,7 +9,7 @@
 #define MAX_CLIENTS 30
 
 typedef struct Request {
-    char* prefix;
+    char prefix;
     char* query;
     char* data;
 } Request;
@@ -21,21 +21,26 @@ char* requestMessage(char message[]) {
 	return req;
 }
 
-// Gets the request param
 Request getRequestParams(char request[]) {
-    Request result;
-    char* req = malloc(strlen(request) * sizeof(char));
-	strcpy(req, request);
-	result.prefix = strsep(&req , " ");
-	result.query = strsep(&req, " ");
-	result.data = strsep(&req, "\n");
+	Request result;
 
-    if (result.prefix != NULL && result.prefix[strlen(result.prefix) -1] == '\n') {
-        result.prefix[strlen(result.prefix) -1] = '\0';
+	char* req = malloc(strlen(request) * sizeof(char));
+	strcpy(req, request);
+
+	result.prefix = request[0];
+
+    char* params;
+    strsep(&request , "-");
+    params = strsep(&request, "-");
+    if (params != NULL && params[strlen(params) -1] == '\n') {
+        params[strlen(params) -1] = '\0';
     }
 
-	if (result.query != NULL &&  result.query[strlen(result.query) -1] == '\n') {
-        result.query[strlen(result.query) -1] = '\0';
+	if (result.prefix == '3') {
+		result.query = strsep(&params, " ");
+		result.data = strsep(&params, "\0");
+	} else {
+        result.query = strsep(&params, "\0");
 	}
 
 	return result;
@@ -49,38 +54,48 @@ char* getRequest(char request[]) {
 	char *request_answer;
 
     request_params = getRequestParams(request);
-    if (strcmp(request_params.prefix, "course") == 0) {
+	if ((request_params.prefix != '5' && request_params.prefix != '7') && request_params.query == NULL) {
+		return requestMessage("Invalid request query.\n");
+	}
+
+    if (request_params.prefix == '1') {
         request_answer = getNamesByCourse(request_params.query);
-    } else if (strcmp(request_params.prefix, "skill") == 0) {
+    } else if (request_params.prefix == '2') {
         request_answer = getSkillsByCity(request_params.query);
-    } else if (strcmp(request_params.prefix, "add_experience") == 0) {
+    } else if (request_params.prefix == '3') {
+		if (request_params.data == NULL) {
+			return requestMessage("Invalid request query.\n");
+		}
         request_answer = requestMessage(addExpOnProfile(request_params.query, request_params.data));
-    } else if (strcmp(request_params.prefix, "get_experience")  == 0) {
+    } else if (request_params.prefix == '4') {
         request_answer = getExpByEmail(request_params.query);
-    } else if (strcmp(request_params.prefix, "all_profiles") == 0) {
+    } else if (request_params.prefix == '5') {
         request_answer = getAllInfo();
-    } else if (strcmp(request_params.prefix, "profile") == 0) {
-        request_answer = getProfileByEmail(request_params.query);
+    } else if (request_params.prefix == '6') {
+        request_answer = getInfosByEmail(request_params.query);
+    } else if (request_params.prefix == '7') {
+        request_answer = getCommands();
     } else {
-        request_answer = requestMessage("Invalid request query.\n\n");
+        request_answer = requestMessage("Invalid request query.\n");
     }
 
 	/* WARNING: It is important that request_answer is freed (in the function caller)
 	 * after it is not used anymore */
 	return request_answer;
-	
 }
 
 // Returns possible commands for given socket
 char* getCommands() {
 	// Instantiating message to return
-	char commands_message[] = "\nHere are the commands the server can interpret:\n\
-\"course {course}\"\n\
-\"skill {city}\"\n\
-\"add experience {email} '{experience}'\"\n\
-\"get_experience {email}\"\n\
-\"all_profiles\"\n\
-\"profiles {email}\"\n\n";
+	char commands_message[] = 
+	"\nHere are the commands to use the server properly:\n\
+	\"1-{course}\"\n\
+	\"2-{city}\"\n\
+	\"3-{email} {experience}\"\n\
+	\"4-{email}\"\n\
+	\"5\"\n\
+	\"6-{email}\"\n\
+	\"7\"\n\n";
 
 	char *commands = malloc(strlen(commands_message) * sizeof(char));
 	strcpy(commands, commands_message);
