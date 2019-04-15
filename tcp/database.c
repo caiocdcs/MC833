@@ -16,7 +16,7 @@ profile profiles[] = {
 	{
 		.email = "sean_parkins@gmail.com",
 		.name = "Sean Parkis",
-		.photoURL = "",
+		.photoUrl = "seanparkins.jpg",
 		.city = "London",
 		.course = "Music",
 		.skill = "Piano, Guitar, Drums",
@@ -25,7 +25,7 @@ profile profiles[] = {
 	{
 		.email = "jane.doe@gmail.com",
 		.name = "Jane Doe",
-		.photoURL = "",
+		.photoUrl = "janedoe.jpg",
 		.city = "Copenhagen",
 		.course = "Architecture",
 		.skill = "Graphics, 3D Modeling, Platforms",
@@ -34,7 +34,7 @@ profile profiles[] = {
 	{
 		.email = "desiree@garrison.com",
 		.name = "Desiree Garrison",
-		.photoURL = "",
+		.photoUrl = "desireegarrison.jpeg",
 		.city = "Manchester",
 		.course = "Computer Scientist",
 		.skill = "Data Analysis, Internet of Things, Cloud Computing",
@@ -43,7 +43,7 @@ profile profiles[] = {
 	{
 		.email = "robert.kenzigton@gmail.com",
 		.name = "Robert Kenzigton",
-		.photoURL = "",
+		.photoUrl = "robertkenzigton.jpg",
 		.city = "Sacramento",
 		.course = "Management",
 		.skill = "Team Leadership, Schedule Management",
@@ -52,7 +52,7 @@ profile profiles[] = {
 	{
 		.email = "tom.hogan@gmail.com",
 		.name = "Tom Hogan",
-		.photoURL = "",
+		.photoUrl = "tomhogan.jpg",
 		.city = "Albuquerque",
 		.course = "Design",
 		.skill = "3D Modeling, UX Design, UI Design",
@@ -61,7 +61,7 @@ profile profiles[] = {
 	{
 		.email = "robson.faker@yahoo.com",
 		.name = "Robson Faker",
-		.photoURL = "",
+		.photoUrl = "robsonfaker.jpg",
 		.city = "Sacramento",
 		.course = "Computer Scientist",
 		.skill = "Mobile Development, Software Engineering, Cloud Computing",
@@ -73,7 +73,7 @@ profile profiles[] = {
 // {
 // 		.email = "",
 // 		.name = "",
-// 		.photoURL = "",
+// 		.photoUrl = "",
 // 		.city = "",
 // 		.course = "",
 // 		.skill = "",

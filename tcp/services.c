@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "services.h"
 #include "database.h"
@@ -115,12 +116,10 @@ char* getAllInfo() {
 
 	for(i = 0; i < TAM; i++) {
 	
-		info = realloc(info, (strlen(info) + strlen(profiles[i].email) + strlen(profiles[i].name) + strlen(profiles[i].photoURL) + strlen(profiles[i].city) + strlen(profiles[i].course) + strlen(profiles[i].skill) + strlen(profiles[i].exp) + 12) * sizeof(char));
+		info = realloc(info, (strlen(info) + strlen(profiles[i].email) + strlen(profiles[i].name) + strlen(profiles[i].city) + strlen(profiles[i].course) + strlen(profiles[i].skill) + strlen(profiles[i].photoUrl) + strlen(profiles[i].exp) + 12) * sizeof(char));
 		strcat(info, profiles[i].email);
 		strcat(info, ", ");
 		strcat(info, profiles[i].name);
-		strcat(info, ", ");
-		strcat(info, profiles[i].photoURL);
 		strcat(info, ", ");
 		strcat(info, profiles[i].city);
 		strcat(info, ", ");
@@ -128,16 +127,15 @@ char* getAllInfo() {
 		strcat(info, ", ");
 		strcat(info, profiles[i].skill);
 		strcat(info, ", ");
+        strcat(info, profiles[i].photoUrl);
+        strcat(info, ", ");
 
 		for(y = 0; profiles[i].exp[y] != NULL; y++) {
 			info = realloc(info, (strlen(info) + strlen(profiles[i].exp[y]) + 2) * sizeof(char));
 			strcat(info, profiles[i].exp[y]);
 			strcat(info, "\n");
 		}
-
 	}
-
-	strcat(info, "\0");
 
 	return info;
 }
@@ -152,25 +150,25 @@ char* getInfosByEmail(char *email) {
 	for(i = 0; i < TAM; i++) {
 
 		if (strcmp(profiles[i].email, email) == 0) {
-			info = realloc(info, (strlen(info) + strlen(profiles[i].email) + strlen(profiles[i].name) + strlen(profiles[i].photoURL) + strlen(profiles[i].city) + strlen(profiles[i].course) + strlen(profiles[i].skill) + strlen(profiles[i].exp) + 12) * sizeof(char));
+			info = realloc(info, (strlen(info) + strlen(profiles[i].email) + strlen(profiles[i].name) + strlen(profiles[i].city) + strlen(profiles[i].course) + strlen(profiles[i].skill) + strlen(profiles[i].photoUrl) + strlen(profiles[i].exp) + 12) * sizeof(char));
 			strcat(info, profiles[i].email);
 			strcat(info, ", ");
 			strcat(info, profiles[i].name);
-			strcat(info, ", ");
-			strcat(info, profiles[i].photoURL);
 			strcat(info, ", ");
 			strcat(info, profiles[i].city);
 			strcat(info, ", ");
 			strcat(info, profiles[i].course);
 			strcat(info, ", ");
 			strcat(info, profiles[i].skill);
-			strcat(info, ", ");
+            strcat(info, ", ");
+            strcat(info, profiles[i].photoUrl);
+            strcat(info, ", ");
 			
 			for(y = 0; profiles[i].exp[y] != NULL; y++) {
-			info = realloc(info, (strlen(info) + strlen(profiles[i].exp[y]) + 2) * sizeof(char));
-			strcat(info, profiles[i].exp[y]);
-			strcat(info, ", ");
-		}
+                info = realloc(info, (strlen(info) + strlen(profiles[i].exp[y]) + 2) * sizeof(char));
+                strcat(info, profiles[i].exp[y]);
+                strcat(info, ", ");
+            }
 
 			break;
 		}

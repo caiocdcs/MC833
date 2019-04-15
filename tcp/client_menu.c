@@ -11,43 +11,89 @@
 
 #include <string.h>
 
-#define BUFFER_SIZE 12500
+#define BUFFER_SIZE 10
 
-char answer[BUFFER_SIZE];
 int socket_fd;
 
+int sendall(int socket_fd, char *buf, int *len)
+{
+    int total = 0;        // how many bytes we've sent
+    int bytes_left = *len; // how many we have left to send
+    int n = -1;
 
-void makeClienRequest() {
-    // simulating all requests
+    // send the size of the message that will be sent
+    char *size = malloc(BUFFER_SIZE * sizeof(char));
+    sprintf(size, "%d", *len);
+    int size_len = strlen(size);
+    n = write(socket_fd, size, size_len);
+
+    usleep(10000);
+    free(size);
+
+    // then send the message
+    while(total < *len && n != -1) {
+        n = send(socket_fd, buf+total, bytes_left, 0);
+        if (n == -1) { break; }
+        total += n;
+        bytes_left -= n;
+    }
+
+    *len = total; // return number actually sent here
+
+    return n==-1?-1:0; // return -1 on failure, 0 on success
+}
+
+void do_user_commands() {
     char line[1030];
+    bzero(line, 1030);
     fgets(line, sizeof(line), stdin);
 
     while (strcmp(line, "exit") != 0) {
-            // Send message to the server
-            int n = write(socket_fd, line, strlen(line));
+        int len = strlen(line);
+        // Send message to the server
+        int n = sendall(socket_fd, line, &len);
 
-            if (n < 0) {
-                perror("ERROR writing to socket");
-                exit(1);
-            }
+        if (n < 0) {
+            perror("ERROR writing to socket");
+            exit(1);
+        }
 
-            // Now read server response
-            bzero(answer, BUFFER_SIZE);
-            n = read(socket_fd, answer, BUFFER_SIZE);
+        // Now read server response with size of the response to be received
+        char *message_size = malloc(BUFFER_SIZE * sizeof(char));
+        bzero(message_size, BUFFER_SIZE);
+        n = read(socket_fd, message_size, BUFFER_SIZE);
 
-            if (n < 0) {
-                perror("ERROR reading from socket");
-                exit(1);
-            }
+        if (n < 0) {
+            perror("ERROR reading from socket");
+            exit(1);
+        }
 
-            printf("%s\n\n", answer);
-            fflush(stdin);
+        int size = atoi(message_size) + 1;
+        char* answer = malloc(size * sizeof(char));
 
-            fgets(line, sizeof(line), stdin);
+        free(message_size);
+
+        // Now read server response
+        bzero(answer, size);
+        n = read(socket_fd, answer, size);
+        //answer[size-1] = '\0';
+
+        if (n < 0) {
+            perror("ERROR reading from socket");
+            exit(1);
+        }
+
+        printf("%s\n\n", answer);
+        fflush(stdin);
+
+        bzero(line, 1030);
+        fgets(line, sizeof(line), stdin);
+
+        free(answer);
     }
-
-    sleep(1);
 }
+
+
 
 int main(int argc, char *argv[]) {
     int portno, n = 0;
@@ -91,15 +137,36 @@ int main(int argc, char *argv[]) {
 
     sleep(2);
 
-    // Wait for welcome message (handshake)
+    // Wait for welcome message
     while (n == 0) {
+        // Now read the size of the message to be received
+        char *message_size = malloc(BUFFER_SIZE * sizeof(char));
+        bzero(message_size, BUFFER_SIZE);
+        n = read(socket_fd, message_size, BUFFER_SIZE);
+
+        if (n < 0) {
+            perror("ERROR reading from socket");
+            exit(1);
+        }
+
+        int size = atoi(message_size) + 1;
+        char* answer = malloc(size * sizeof(char));
+
+        free(message_size);
+
         bzero(answer, BUFFER_SIZE);
-        n = read(socket_fd, answer, BUFFER_SIZE);
+        n = read(socket_fd, answer, size);
+        answer[size-1] = '\0';
         printf("%s\n", answer);
+
+        if (n < 0) {
+            perror("ERROR reading from socket");
+            exit(1);
+        }
+        free(answer);
     }
 
-    // Now ask for a message from the user, this message will be read by server
-    makeClienRequest();
+    do_user_commands();
 
     sleep(5);
 

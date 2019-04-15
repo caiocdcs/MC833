@@ -6,7 +6,7 @@
 typedef struct profile {
 	char* email;
 	char* name;
-	char* photoURL;
+	char* photoUrl;
 	char* city;
 	char* course;
 	char* skill;

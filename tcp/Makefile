@@ -5,7 +5,7 @@ client:
 	gcc -o client -w client.c
 
 client-menu: 
-	gcc -o client -w client.c
+	gcc -o client -w client_menu.c
 
 clean: 
 	rm client server

@@ -13,37 +13,62 @@
 #include <sys/time.h>
 #include "controller.h"
 
-// Defining server's port number
 #define PORT 8888
-// Defining maximum number of simultaneous clients
 #define MAX_CLIENTS 30
-// Data buffer of 1k
-#define BUFFER_SIZE 1025
+#define BUFFER_SIZE 10
 
-// Address of the server with IP and Port
 struct sockaddr_in address;
-// Array to keep each client socket (struct declared on "server.h")
+
+// Array to keep each client socket
 int client_socket[MAX_CLIENTS];
 
 // Master socket will assign clients to new ports
 int master_socket;
+
 // Set of socket file descritors (fd)
 fd_set readfds;
+
 // Size of socket address
 int addrlen;
+
 // Keeps highest file descriptor number (need it for the select function)
 int max_socket_fd;
 
 // data for getting times
 int l = 0;
 struct timeval start, stop;
-// Keeping time array of each request
 long long int request_times[120];
 
+int sendall(int socket_fd, char *buf, int *len)
+{
+    int total = 0;        // how many bytes we've sent
+    int bytes_left = *len; // how many we have left to send
+    int n = -1;
+
+    // send the size of the message that will be sent
+    char *size = malloc(BUFFER_SIZE * sizeof(char));
+    sprintf(size, "%d", *len);
+    int size_len = strlen(size) + 1;
+    n = write(socket_fd, size, size_len);
+
+    usleep(1000);
+    free(size);
+
+    // then send the message
+    while(total < *len && n != -1) {
+        n = send(socket_fd, buf+total, bytes_left, 0);
+        if (n == -1) { break; }
+        total += n;
+        bytes_left -= n;
+    }
+
+    *len = total; // return number actually sent here
+
+    return n==-1?-1:0; // return -1 on failure, 0 on success
+}
 
 // Initializes all sockets with blank values
 void initializeSockets() {
-    // Initializing all client_socket[] to 0 so not checked 
     for (int i = 0; i < MAX_CLIENTS; i++) {
         client_socket[i] = 0;
     }
@@ -96,10 +121,10 @@ void addValidSocketsToReadSet() {
     // Adding master socket to set 
     FD_SET(master_socket, &readfds);
     max_socket_fd = master_socket;
+
     // Adding child sockets to set 
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        
-        // Socket descriptor
+
         int socket_fd = client_socket[i];
 
         // If socket descriptor is valid then add to reading set 
@@ -114,39 +139,34 @@ void addValidSocketsToReadSet() {
 
 // Waits for an activity on one of the sockets
 void waitForActivity() {
-    // Timeout is NULL, so wait indefinitely
     int activity = select(max_socket_fd + 1, &readfds, NULL, NULL, NULL);
 
-    // Verifying error on socket activity
     if ((activity < 0) && (errno != EINTR)) {
         printf("-> WARNING: select error");
     }
 }
 
 // Reads incoming connectiong on the master socket
-void readIncomingConnections() {
+void readNewConnections() {
 	int new_socket = accept(master_socket, (struct sockaddr *)&address, (socklen_t*)&addrlen);
     if (new_socket < 0) {
         perror("accept");
         exit(EXIT_FAILURE);
     }
 
-    // Informing of new user connection
     printf("New connection, socket file descriptor is %d, IP is: %s , Port: %d\n",
             new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
-    // Sending new connection greeting message
+    // Sending new connection greeting message with commands
     char *message = getCommands();
+    int len = strlen(message);
 
-    if (write(new_socket, message, strlen(message)) != strlen(message)) {
+    if (sendall(new_socket, message, &len) == -1) {
         perror("send");
     }
 
-    printf("Welcome message sent successfully\n");
-
     // Adding new socket to array of sockets
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        // Assigning new socket to some empty position
         if (client_socket[i] == 0) {
             client_socket[i] = new_socket;
             printf("Adding %d to list of sockets at index %d\n", new_socket, i);
@@ -158,13 +178,30 @@ void readIncomingConnections() {
 
 // Reads IO operations on generic sockets
 void readSocketIO(int socket_fd, int pos) {
-    char buffer[BUFFER_SIZE];
-    int valread = read(socket_fd, buffer, BUFFER_SIZE-1);
+    // Now read server response with size of the response to be received
+    char *message_size = malloc(BUFFER_SIZE * sizeof(char));
+    bzero(message_size, BUFFER_SIZE);
+    int n = read(socket_fd, message_size, BUFFER_SIZE);
+
+    if (n < 0) {
+        perror("ERROR reading from socket");
+        exit(1);
+    }
+
+    int size = atoi(message_size);
+    char* buffer = malloc(size * sizeof(char));
+
+    free(message_size);
+
+    // Now read server response
+    bzero(buffer, size);
+    int val_read = read(socket_fd, buffer, size);
+
     // Getting initial time
     gettimeofday(&start, NULL);
+
     // Checking if message was for closing (EOF) and also read the incoming message 
-    if (valread == 0) {
-        // Somebody disconnected, get his details and print 
+    if (val_read == 0) {
         getpeername(socket_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
         printf("\nHost disconnected, IP %s, Port %d\n",
                inet_ntoa(address.sin_addr), ntohs(address.sin_port));
@@ -172,63 +209,40 @@ void readSocketIO(int socket_fd, int pos) {
         // Closing the socket and marking as 0 in list for reuse 
         close(socket_fd);
         client_socket[pos] = 0;
-    }
-
-    // Getting and echoing back the message that came in
-    else {
-        // Setting the string terminating NULL byte on the end of the data read
-        buffer[valread] = '\0';
+    } else {
+        buffer[size - 1] = '\0';
         char* answer;
 
         answer = getRequest(buffer);
+        int len = strlen(answer);
 
         // Getting final time
         gettimeofday(&stop, NULL);
 
         request_times[l] = (stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec);
 
+        // printing processment time
         if (l % 20 == 0) {
             printf("\n");
         }
         printf("%llu\t", request_times[l++]);
 
     	// Sending answer back to client
-    	write(socket_fd, answer, strlen(answer));
-        free(answer);
+    	sendall(socket_fd, answer, &len);
+    	free(answer);
     }
+
+    free(buffer);
 }
 
-// Let the magic begin...
 int main(int argc, char *argv[]) {
 
-	// Initializing all sockets with blank
 	initializeSockets();
 
 	// Configuring master socket to read new connections and control other sockets
 	setMasterSocket();
 
     printf("Waiting for connections...\n");
-
-    // Adding every valid (not blank) socket to the reading set
-    addValidSocketsToReadSet();
-
-    // Waiting for an activity on one of the sockets
-    waitForActivity();
-
-    // If master socket is on reading set, then it is an incoming connection 
-    if (FD_ISSET(master_socket, &readfds)) {
-        readIncomingConnections();
-    }
-
-    // For every socket, if it is on the reading set then read its IO operation
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        int socket_fd = client_socket[i];
-        if (FD_ISSET(socket_fd, &readfds)) {
-            readSocketIO(socket_fd, i);
-        }
-    }
-
-    // reading requests and calculating processment time
     
     // Accepting incoming connections
     for (;;) {
@@ -240,7 +254,7 @@ int main(int argc, char *argv[]) {
 
         // If master socket is on reading set, then it is an incoming connection 
         if (FD_ISSET(master_socket, &readfds)) {
-            readIncomingConnections();
+            readNewConnections();
         }
 
         // For every socket, if it is on the reading set then read its IO operation
