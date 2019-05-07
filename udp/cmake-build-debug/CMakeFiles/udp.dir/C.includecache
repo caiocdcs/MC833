@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/caio.cesar/workspace/unicamp/mc833/MC833/udp/database.h
+
+/Users/caio.cesar/workspace/unicamp/mc833/MC833/udp/services.c
+stdio.h
+-
+string.h
+-
+stdlib.h
+-
+unistd.h
+-
+services.h
+/Users/caio.cesar/workspace/unicamp/mc833/MC833/udp/services.h
+database.h
+/Users/caio.cesar/workspace/unicamp/mc833/MC833/udp/database.h
+
+/Users/caio.cesar/workspace/unicamp/mc833/MC833/udp/services.h
+database.h
+/Users/caio.cesar/workspace/unicamp/mc833/MC833/udp/database.h
+
