@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include "controller.h"
+#include <sys/time.h>
 
 #define PORT 8888
 
@@ -33,7 +34,7 @@ int main(int argc, char **argv) {
 
     // timeval structs to get time delay on requests made (in milliseconds)
     struct timeval start, stop;
-    long long int processing_time;
+    unsigned long long int processing_time;
 
     master_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if (master_socket < 0)
@@ -67,18 +68,12 @@ int main(int argc, char **argv) {
         // Getting initial time
         gettimeofday(&start, NULL);
 
-        // gethostbyaddr: determine who sent the datagram
-        hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr,
-                              sizeof(clientaddr.sin_addr.s_addr), AF_INET);
-        if (hostp == NULL)
-            error("ERROR on gethostbyaddr");
-
         hostaddrp = inet_ntoa(clientaddr.sin_addr);
 
         if (hostaddrp == NULL)
             error("ERROR on inet_ntoa\n");
 
-        printf("server received datagram from %s (%s)\n", hostp->h_name, hostaddrp);
+        printf("server received datagram from %s\n", hostaddrp);
         printf("server received %lu/%d bytes: %s\n", strlen(buffer), n, buffer);
 
         answer = getRequest(buffer);
@@ -94,6 +89,6 @@ int main(int argc, char **argv) {
         if (n < 0)
             error("ERROR in sendto");
 
-        printf("%llu\n", processing_time); // time in milliseconds
+        printf("%llu ", processing_time); // time in milliseconds
     }
 }
