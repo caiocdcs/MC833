@@ -24,8 +24,10 @@ int main(int argc, char **argv) {
     struct sockaddr_in serveraddr;
     struct hostent *server;
     char *hostname;
-    char buffer[BUFFER_SIZE];
-    char *message = "6-jane.doe@gmail.com";
+    char *line;
+    char answer[BUFFER_SIZE];
+    char message[BUFFER_SIZE];
+    char* prefix = "6-";
 
     // Checking command line arguments
     if (argc != 3) {
@@ -47,26 +49,38 @@ int main(int argc, char **argv) {
 
     // Building the server's Internet address */
     bzero((char *) &serveraddr, sizeof(serveraddr));
-    serveraddr.sin_family = AF_INET;
+            serveraddr.sin_family = AF_INET;
     bcopy((char *)server->h_addr,
-          (char *)&serveraddr.sin_addr.s_addr,
-          server->h_length);
+            (char *)&serveraddr.sin_addr.s_addr,
+            server->h_length);
     serveraddr.sin_port = htons(portno);
-
-    strcpy(buffer, message);
-
-    // Sending the message to the server
     serverlen = sizeof(serveraddr);
-    n = sendto(sockfd, buffer, strlen(buffer), 0, &serveraddr, serverlen);
-    if (n < 0) 
-      error("ERROR in sendto");
-    
-    // Printing the server's response
-    n = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, &serveraddr, &serverlen);
-    if (n < 0) 
-      error("ERROR in recvfrom");
-    
-    printf("%s", buffer);
+
+    printf("Type the email to find: \n");
+    line = (char *) malloc(sizeof(char) * BUFFER_SIZE);
+    fgets(line, BUFFER_SIZE, stdin);
+
+    while (strcmp(line, "exit") != 0) {
+      strcat(message, prefix);
+      strcat(message, line);
+      // Sending the message to the server
+      
+      n = sendto(sockfd, message, strlen(message), 0, &serveraddr, serverlen);
+      if (n < 0) 
+        error("ERROR in sendto");
+      
+      bzero(answer, BUFFER_SIZE);
+      // Printing the server's response
+      n = recvfrom(sockfd, answer, BUFFER_SIZE, 0, &serveraddr, &serverlen);
+      if (n < 0)
+        error("ERROR in recvfrom");
+      
+      printf("%s\n\n", answer);
+
+      bzero(line, BUFFER_SIZE);
+      bzero(&message, BUFFER_SIZE);
+      fgets(line, BUFFER_SIZE, stdin);
+    }
 
     return 0;
 }
