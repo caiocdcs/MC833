@@ -11,24 +11,25 @@ public class Client {
         ProfileService server = (ProfileService) registry
                 .lookup("ProfileService");
 
+        // getting times for each operation
         List<Long> times = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
             long start = System.nanoTime();
-            System.out.println(server.getProfilesByCourse("Computacao"));
+            System.out.println(server.getProfilesByCourse("Architecture"));
             long stop = System.nanoTime();
             times.add(stop - start);
         }
 
         for (int i = 0; i < 20; i++) {
             long start = System.nanoTime();
-            System.out.println(server.getSkillsByCity("Campinas"));
+            System.out.println(server.getSkillsByCity("Sacramento"));
             long stop = System.nanoTime();
             times.add(stop - start);
         }
 
         for (int i = 0; i < 20; i++) {
             long start = System.nanoTime();
-            System.out.println(server.addExperience("maria_silva@gmail.com", "Teste"));
+            System.out.println(server.addExperience("maria_silva@gmail.com", "Databases"));
             long stop = System.nanoTime();
             times.add(stop - start);
         }
@@ -54,6 +55,7 @@ public class Client {
             times.add(stop - start);
         }
 
+        // printing times
         for (int i = 0; i < times.size(); i++) {
             if (i % 20 == 0) {
                 System.out.print("\n");
